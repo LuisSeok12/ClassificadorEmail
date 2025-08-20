@@ -5,7 +5,7 @@ Aplicação **FastAPI** com interface HTML (Tailwind via CDN) para **classificar
 - **Classificação**: usa **Hugging Face Inference API** (zero-shot multilíngue) se disponível, senão **OpenAI**, e por último um **fallback heurístico**.
 - **Resposta**: usa **OpenAI** se disponível; caso contrário, templates prontos.
 
-## ⚙️ Executar localmente
+## Executar localmente
 
 ```bash
 python -m venv .venv
@@ -20,7 +20,7 @@ uvicorn app.main:app --reload --port 7860
 # Abra http://localhost:7860
 ```
 
-## 📁 Estrutura
+## Estrutura
 
 ```
 app/
@@ -40,9 +40,10 @@ Procfile
 runtime.txt
 .env.example
 README.md
+.gitignore
 ```
 
-## 🚀 Deploy rápido (Render.com)
+## Deploy rápido (Render.com)
 
 1. **Crie um repositório no GitHub** com estes arquivos.
 2. No **Render**, crie um **Web Service** a partir do repositório.
@@ -54,7 +55,7 @@ README.md
 
 > Alternativas: Railway.app, Deta.space, Fly.io, Hugging Face Spaces (pede refatoração para Gradio/Streamlit), ou Heroku.
 
-## 🧪 Como funciona (resumo técnico)
+## Como funciona (resumo técnico)
 
 1. **Pré-processamento** (`app/nlp.py`): normalização (lower/acentos), remoção de stopwords PT-BR, contagem de tokens.
 2. **Classificação** (`app/providers.py`):
@@ -65,18 +66,18 @@ README.md
    - **OpenAI** (quando disponível) com prompt objetivo.
    - Fallback: **templates** prontos.
 
-## 🧩 Extensões sugeridas
+## Extensões sugeridas
 
 - Persistir resultados (SQLite / Postgres).
 - Painel de métricas (acurácia, distribuição por categoria).
 - Treinar um classificador leve supervisionado com dados reais (LogReg/SVM) como camada base.
 - Filas (Celery/RQ) para processamento em lote.
 
-## 🔐 Observações
+## Observações
 
 - Não suba a sua chave de API no GitHub.
 - Para PDFs digitalizados (scans), adicione OCR (Tesseract/pytesseract).
 
 ---
 
-**Autor:** Você 🙂 — Projeto de demonstração para o processo seletivo AutoU.
+**Autor:** Luis Eduardo Fonseca de Almeida Sarinho — Projeto de demonstração para o processo seletivo AutoU.
