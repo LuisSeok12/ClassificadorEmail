@@ -104,8 +104,6 @@
       }
     }
   });
-
-  // Colar texto diretamente na dropzone
   dropzone.addEventListener('paste', (e) => {
     const txt = (e.clipboardData || window.clipboardData).getData('text');
     if (txt) {
