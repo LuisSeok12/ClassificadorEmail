@@ -4,6 +4,9 @@ import json
 import re
 from typing import Dict
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ---------- Config ----------
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
