@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="pt-br">
 <head>
@@ -11,24 +10,39 @@
   <div class="max-w-4xl mx-auto p-6">
     <header class="mb-6">
       <h1 class="text-2xl font-bold">AutoU • Classificador de E-mails</h1>
-      <p class="text-sm text-slate-600">Envie um .txt ou .pdf, ou cole o texto do e-mail. O sistema classifica e sugere uma resposta.</p>
+      <p class="text-sm text-slate-600">
+        Envie um .txt ou .pdf, ou cole o texto do e-mail. O sistema classifica e sugere uma resposta.
+      </p>
     </header>
 
     <section class="grid md:grid-cols-2 gap-6">
+      <!-- Coluna de Entrada -->
       <div class="p-4 bg-white rounded-2xl shadow">
         <h2 class="font-semibold mb-3">Entrada</h2>
-        <form id="form" class="space-y-3">
+
+        <!-- Dropzone -->
+        <div id="dropzone"
+             class="border-2 border-dashed rounded-xl p-4 text-sm text-slate-600 flex items-center justify-center select-none text-center transition-colors">
+          Arraste e solte um .txt ou .pdf aqui, ou cole texto (Ctrl/Cmd+V).<br/>
+          <span class="text-xs text-slate-400">Você também pode usar os campos abaixo.</span>
+        </div>
+
+        <form id="form" class="space-y-3 mt-3">
           <input type="file" id="file" name="file" accept=".txt,.pdf" class="block w-full text-sm"/>
 
           <div class="relative">
-            <textarea id="text" name="text" rows="10" class="w-full p-3 border rounded-xl" placeholder="Ou cole aqui o conteúdo do e-mail..."></textarea>
+            <textarea id="text" name="text" rows="10" class="w-full p-3 border rounded-xl"
+                      placeholder="Ou cole aqui o conteúdo do e-mail..."></textarea>
             <div class="absolute right-2 bottom-2 text-xs text-slate-500" id="counter">0 chars</div>
           </div>
 
-          <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Analisar</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
+            Analisar
+          </button>
         </form>
       </div>
 
+      <!-- Coluna de Resultado -->
       <div class="p-4 bg-white rounded-2xl shadow">
         <h2 class="font-semibold mb-3">Resultado</h2>
         <div id="result" class="text-sm space-y-3">
@@ -43,54 +57,112 @@
   </div>
 
 <script>
-const form = document.getElementById('form');
-const result = document.getElementById('result');
-const counter = document.getElementById('counter');
-const textArea = document.getElementById('text');
+  const form = document.getElementById('form');
+  const result = document.getElementById('result');
+  const counter = document.getElementById('counter');
+  const textArea = document.getElementById('text');
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('file');
 
-textArea.addEventListener('input', () => {
-  counter.textContent = (textArea.value || '').length + ' chars';
-});
-
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  result.innerHTML = '<div class="p-3 rounded-xl bg-yellow-50 border border-yellow-200">Processando…</div>';
-
-  const fd = new FormData();
-  const file = document.getElementById('file').files[0];
-  const text = textArea.value;
-
-  if (file) fd.append('file', file);
-  if (text && text.trim() !== "") fd.append('text', text);
-
-  try {
-    const rsp = await fetch('/api/analyze', { method: 'POST', body: fd });
-    if (!rsp.ok) {
-      const err = await rsp.json().catch(() => ({}));
-      throw new Error(err.detail || ('Erro HTTP ' + rsp.status));
-    }
-    const data = await rsp.json();
-    result.innerHTML = `
-      <div class="grid gap-3">
-        <div class="p-3 rounded-xl bg-slate-100">
-          <div class="text-xs uppercase tracking-wide text-slate-500">Categoria</div>
-          <div class="text-lg font-semibold">${data.category} <span class="text-xs text-slate-500">(${(data.confidence*100).toFixed(1)}%)</span></div>
-          <div class="text-[11px] text-slate-500 mt-1">Classificador: ${data.classified_by} • Tokens (pré-processados): ${data.tokens}</div>
-        </div>
-        <div class="p-3 rounded-xl bg-slate-50 border">
-          <div class="text-xs uppercase tracking-wide text-slate-500 mb-1">Resposta sugerida</div>
-          <pre class="whitespace-pre-wrap text-sm">${data.suggested_reply}</pre>
-        </div>
-        <details class="p-3 rounded-xl bg-slate-50">
-          <summary class="cursor-pointer text-sm text-slate-600">Prévia do e-mail</summary>
-          <pre class="whitespace-pre-wrap text-xs mt-2">${data.preview}</pre>
-        </details>
-      </div>
-    `;
-  } catch (err) {
-    result.innerHTML = '<div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-900">Falha: ' + err.message + '</div>';
+  // Util
+  function escapeHtml(s) {
+    return (s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   }
-});
+
+  // Atualiza contador
+  function updateCounter() {
+    counter.textContent = (textArea.value || '').length + ' chars';
+  }
+  textArea.addEventListener('input', updateCounter);
+
+  // Estilos da dropzone ao arrastar
+  ['dragenter','dragover'].forEach(evt =>
+    dropzone.addEventListener(evt, e => {
+      e.preventDefault();
+      dropzone.classList.add('border-blue-400','bg-blue-50');
+    })
+  );
+  ['dragleave','drop'].forEach(evt =>
+    dropzone.addEventListener(evt, e => {
+      e.preventDefault();
+      dropzone.classList.remove('border-blue-400','bg-blue-50');
+    })
+  );
+
+  // Soltar arquivo ou texto na dropzone
+  dropzone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    if (dt.files && dt.files.length) {
+      // Se o usuário soltar um arquivo, preenche o input[type=file]
+      fileInput.files = dt.files;
+    } else {
+      // Se soltar texto selecionado de outro lugar
+      const txt = dt.getData('text/plain');
+      if (txt) {
+        textArea.value = txt;
+        updateCounter();
+      }
+    }
+  });
+
+  // Colar texto diretamente na dropzone
+  dropzone.addEventListener('paste', (e) => {
+    const txt = (e.clipboardData || window.clipboardData).getData('text');
+    if (txt) {
+      textArea.value = txt;
+      updateCounter();
+    }
+  });
+
+  // Submit
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    result.innerHTML = '<div class="p-3 rounded-xl bg-yellow-50 border border-yellow-200">Processando…</div>';
+
+    const fd = new FormData();
+    const file = fileInput.files[0];
+    const text = textArea.value;
+
+    if (file) fd.append('file', file);
+    if (text && text.trim() !== "") fd.append('text', text);
+
+    try {
+      const rsp = await fetch('/api/analyze', { method: 'POST', body: fd });
+      if (!rsp.ok) {
+        const err = await rsp.json().catch(() => ({}));
+        throw new Error(err.detail || ('Erro HTTP ' + rsp.status));
+      }
+      const data = await rsp.json();
+
+      result.innerHTML = `
+        <div class="grid gap-3">
+          <div class="p-3 rounded-xl bg-slate-100">
+            <div class="text-xs uppercase tracking-wide text-slate-500">Categoria</div>
+            <div class="text-lg font-semibold">
+              ${escapeHtml(data.category)} 
+              <span class="text-xs text-slate-500">(${(data.confidence*100).toFixed(1)}%)</span>
+            </div>
+            <div class="text-[11px] text-slate-500 mt-1">
+              Classificador: ${escapeHtml(data.classified_by)} • Tokens (pré-processados): ${Number(data.tokens) || 0}
+            </div>
+          </div>
+          <div class="p-3 rounded-2xl bg-slate-50 border">
+            <div class="text-xs uppercase tracking-wide text-slate-500 mb-1">Resposta sugerida</div>
+            <pre class="whitespace-pre-wrap text-sm">${escapeHtml(data.suggested_reply)}</pre>
+          </div>
+          <details class="p-3 rounded-2xl bg-slate-50">
+            <summary class="cursor-pointer text-sm text-slate-600">Prévia do e-mail</summary>
+            <pre class="whitespace-pre-wrap text-xs mt-2">${escapeHtml(data.preview)}</pre>
+          </details>
+        </div>
+      `;
+    } catch (err) {
+      result.innerHTML = '<div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-900">Falha: ' + escapeHtml(err.message) + '</div>';
+    }
+  });
+
+  // Inicializa contador no load
+  updateCounter();
 </script>
 </body>
 </html>
