@@ -5,7 +5,7 @@ Aplicação **FastAPI** com interface HTML (Tailwind via CDN) para **classificar
 - **Classificação**: usa **Hugging Face Inference API** (zero-shot multilíngue) se disponível, senão **OpenAI**, e por último um **fallback heurístico**.
 - **Resposta**: usa **OpenAI** se disponível; caso contrário, templates prontos.
 
-## ⚙️ Executar localmente
+## Executar localmente
 
 ```bash
 python -m venv .venv
@@ -20,7 +20,7 @@ uvicorn app.main:app --reload --port 7860
 # Abra http://localhost:7860
 ```
 
-## 📁 Estrutura
+## Estrutura
 
 ```
 app/
@@ -40,6 +40,7 @@ Procfile
 runtime.txt
 .env.example
 README.md
+.gitignore
 ```
 
 ## Deploy rápido (Render.com)
