@@ -1,4 +1,4 @@
-# AutoU — Classificador de E-mails (Demo)
+# Classificador de E-mails
 
 Aplicação **FastAPI** com interface HTML (Tailwind via CDN) para **classificar e-mails** em _Produtivo_ ou _Improdutivo_ e **sugerir resposta automática**.
 
